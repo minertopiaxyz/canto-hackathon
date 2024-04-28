@@ -17,6 +17,7 @@ contract PetShop is StakingRewards {
     address public TOKEN;
     address public CNOTE;
     address public ROUTER;
+    uint256 public snapshot;
 
     function init(
         address _note,
@@ -33,7 +34,7 @@ contract PetShop is StakingRewards {
         CNOTE = _cNote;
         ROUTER = _router;
 
-        uint256 MAX_UINT = 2**256 - 1;
+        uint256 MAX_UINT = 2 ** 256 - 1;
         IERC20(NOTE).approve(CNOTE, MAX_UINT);
         IERC20(CNOTE).approve(CNOTE, MAX_UINT);
         IERC20(NOTE).approve(ROUTER, MAX_UINT);
@@ -58,18 +59,21 @@ contract PetShop is StakingRewards {
     function pumpPrice() public returns (uint256, uint256) {
         // all NOTE already invested as cnote
         // lets calculate the interest
-        uint256 supplyPlusInterest = ICToken(CNOTE).balanceOfUnderlying(
-            address(this)
-        );
+        snapshot = ICToken(CNOTE).balanceOfUnderlying(address(this));
 
         uint256 interest = 0;
-        uint256 burned = 0;
-        if (supplyPlusInterest > totalSupply) {
-            interest = totalSupply - supplyPlusInterest;
+        if (snapshot > totalSupply) {
+            interest = snapshot - totalSupply;
             ICToken(CNOTE).redeemUnderlying(interest);
         }
 
+        uint256 burned = buyAndBurn();
+        return (interest, burned);
+    }
+
+    function buyAndBurn() private returns (uint256) {
         uint256 noteAmount = IERC20(NOTE).balanceOf(address(this));
+        uint256 burned = 0;
 
         if (noteAmount > 0) {
             // use the interest to buy token
@@ -88,6 +92,10 @@ contract PetShop is StakingRewards {
             ERC20Burnable(TOKEN).burn(burned);
         }
 
-        return (interest, burned);
+        return (burned);
+    }
+
+    function snapshotInterest() public {
+        snapshot = ICToken(CNOTE).balanceOfUnderlying(address(this));
     }
 }

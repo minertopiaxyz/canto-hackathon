@@ -8,14 +8,14 @@ contract CantoHackathon {
     uint256 MAX_UINT = 2 ** 256 - 1;
 
     // testnet
-    address public addressFactory = 0x760a17e00173339907505B38F95755d28810570C;
-    address public addressRouter = 0x463e7d4DF8fE5fb42D024cb57c77b76e6e74417a;
-    address public addressCNote = 0x04E52476d318CdF739C38BD41A922787D441900c;
+    // address public addressFactory = 0x760a17e00173339907505B38F95755d28810570C;
+    // address public addressRouter = 0x463e7d4DF8fE5fb42D024cb57c77b76e6e74417a;
+    // address public addressCNote = 0x04E52476d318CdF739C38BD41A922787D441900c;
 
     // mainnet
-    // address public addressFactory = 0xE387067f12561e579C5f7d4294f51867E0c1cFba;
-    // address public addressRouter = 0xa252eEE9BDe830Ca4793F054B506587027825a8e;
-    // address public addressCNote = 0xEe602429Ef7eCe0a13e4FfE8dBC16e101049504C;
+    address public addressFactory = 0xE387067f12561e579C5f7d4294f51867E0c1cFba;
+    address public addressRouter = 0xa252eEE9BDe830Ca4793F054B506587027825a8e;
+    address public addressCNote = 0xEe602429Ef7eCe0a13e4FfE8dBC16e101049504C;
 
     address public addressDeployer;
     address public addressNote;
