@@ -17,8 +17,8 @@ async function getSC(scName, scAddr) {
 }
 
 async function main() {
-  const noteAddress = '0x03F734Bd9847575fDbE9bEaDDf9C166F880B5E5f'; // testnet
-  // const noteAddress = '0x4e71A2E537B7f9D9413D3991D37958c0b5e1e503'; // mainnet
+  // const noteAddress = '0x03F734Bd9847575fDbE9bEaDDf9C166F880B5E5f'; // testnet
+  const noteAddress = '0x4e71A2E537B7f9D9413D3991D37958c0b5e1e503'; // mainnet or fork
   const note = await getSC('ERC20', noteAddress);
   const noteName = await note.name();
   console.log(noteName);
@@ -26,18 +26,19 @@ async function main() {
   console.log('deploy DogToken');
   let SC = await ethers.getContractFactory("DogToken");
   const dogtoken = await SC.deploy();
-  console.log('done!');
+  console.log('dogtoken deployed! ' + dogtoken.address);
 
   console.log('deploy PetShop');
   SC = await ethers.getContractFactory("PetShop");
   const petshop = await SC.deploy();
-  console.log('done!');
+  console.log('petshop deployed! ' + petshop.address);
 
   console.log('deploy ThePark');
   SC = await ethers.getContractFactory("ThePark");
   const thepark = await SC.deploy();
-  console.log('done!');
+  console.log('thepark deployed! ' + thepark.address);
 
+  console.log('deploy CantoHackathon');
   SC = await ethers.getContractFactory("CantoHackathon");
   const cantohackathon = await SC.deploy(dogtoken.address, petshop.address, thepark.address);
   console.log('cantohackathon address: ' + cantohackathon.address);
@@ -80,6 +81,7 @@ main().catch((error) => {
 // use nodejs v18
 // npx hardhat compile
 // npx hardhat run --network testnet scripts/deploy.js
+// npx hardhat run --network fork scripts/deploy.js
 
 // npx hardhat verify --network testnet [sc address]
 

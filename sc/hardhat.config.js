@@ -31,6 +31,11 @@ module.exports = {
       url: "https://canto-testnet.plexnode.wtf",
       chainId: 7701,
       accounts: [PRIVATEKEY_DEV],
+    },
+    fork: {
+      url: "http://localhost:8545",
+      chainId: 7700,
+      accounts: [PRIVATEKEY_DEV]
     }
   },
   sourcify: {
