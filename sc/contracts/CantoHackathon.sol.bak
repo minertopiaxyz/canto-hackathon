@@ -1,0 +1,417 @@
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.9;
+
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/ERC4626.sol";
+
+interface IFactory {
+    function allPairsLength() external view returns (uint256);
+
+    function isPair(address pair) external view returns (bool);
+
+    function pairCodeHash() external pure returns (bytes32);
+
+    function getPair(
+        address tokenA,
+        address token,
+        bool stable
+    ) external view returns (address);
+
+    function createPair(
+        address tokenA,
+        address tokenB,
+        bool stable
+    ) external returns (address);
+}
+
+interface IRouter {
+    struct route {
+        address from;
+        address to;
+        bool stable;
+    }
+
+    function addLiquidity(
+        address tokenA,
+        address tokenB,
+        bool stable,
+        uint256 amountADesired,
+        uint256 amountBDesired,
+        uint256 amountAMin,
+        uint256 amountBMin,
+        address to,
+        uint256 deadline
+    )
+        external
+        returns (
+            uint256 amountA,
+            uint256 amountB,
+            uint256 liquidity
+        );
+
+    function swapExactTokensForTokensSimple(
+        uint256 amountIn,
+        uint256 amountOutMin,
+        address tokenFrom,
+        address tokenTo,
+        bool stable,
+        address to,
+        uint256 deadline
+    ) external returns (uint256[] memory amounts);
+
+    function getAmountOut(
+        uint256 amountIn,
+        address tokenIn,
+        address tokenOut
+    ) external view returns (uint256 amount, bool stable);
+
+    function swapExactCANTOForTokens(
+        uint256 amountOutMin,
+        route[] calldata routes,
+        address to,
+        uint256 deadline
+    ) external payable returns (uint256[] memory amounts);
+
+    function isPair(address pair) external view returns (bool);
+}
+
+// based on: https://github.com/Canto-Network/clm/blob/main/src/CTokenInterfaces.sol
+// interface to interact with cnote !!
+interface ICToken {
+    function balanceOfUnderlying(address owner) external returns (uint256);
+
+    function mint(uint256 mintAmount) external returns (uint256);
+
+    function redeem(uint256 redeemTokens) external returns (uint256);
+
+    function redeemUnderlying(uint256 redeemAmount) external returns (uint256);
+}
+
+contract CToken {
+    address public underlying;
+}
+
+contract DogToken is ERC20Burnable {
+    constructor() ERC20("Free Public Doge", "DOGF") {
+        _mint(msg.sender, 21e27);
+    }
+}
+
+// ref: https://solidity-by-example.org/defi/staking-rewards/
+// add modifier to prevent flashloan attack
+contract StakingRewards {
+    IERC20 public stakingToken;
+    IERC20 public rewardsToken;
+
+    // Duration of rewards to be paid out (in seconds)
+    uint256 public duration;
+    // Timestamp of when the rewards finish
+    uint256 public finishAt;
+    // Minimum of last updated time and reward finish time
+    uint256 public updatedAt;
+    // Reward to be paid out per second
+    uint256 public rewardRate;
+    // Sum of (reward rate * dt * 1e18 / total supply)
+    uint256 public rewardPerTokenStored;
+    // User address => rewardPerTokenStored
+    mapping(address => uint256) public userRewardPerTokenPaid;
+    // User address => rewards to be claimed
+    mapping(address => uint256) public rewards;
+    // Total staked
+    uint256 public totalSupply;
+    // User address => staked amount
+    mapping(address => uint256) public balanceOf;
+    // User address => last time action
+    mapping(address => uint256) public userLastActionTime;
+
+    modifier guardAction() {
+        // prevent user to call stake/unstake/claimreward in single block
+        require(
+            block.timestamp > userLastActionTime[msg.sender],
+            "invalid time"
+        );
+        userLastActionTime[msg.sender] = block.timestamp;
+        _;
+    }
+
+    modifier updateReward(address _account) {
+        rewardPerTokenStored = rewardPerToken();
+        updatedAt = lastTimeRewardApplicable();
+
+        if (_account != address(0)) {
+            rewards[_account] = earned(_account);
+            userRewardPerTokenPaid[_account] = rewardPerTokenStored;
+        }
+
+        _;
+    }
+
+    function lastTimeRewardApplicable() public view returns (uint256) {
+        return _min(finishAt, block.timestamp);
+    }
+
+    function rewardPerToken() public view returns (uint256) {
+        if (totalSupply == 0) {
+            return rewardPerTokenStored;
+        }
+
+        return
+            rewardPerTokenStored +
+            (rewardRate * (lastTimeRewardApplicable() - updatedAt) * 1e18) /
+            totalSupply;
+    }
+
+    function stake(uint256 _amount)
+        external
+        updateReward(msg.sender)
+        guardAction
+    {
+        require(_amount > 0, "amount = 0");
+        stakingToken.transferFrom(msg.sender, address(this), _amount);
+        balanceOf[msg.sender] += _amount;
+        totalSupply += _amount;
+        afterStake(_amount);
+    }
+
+    function unstake(uint256 _amount)
+        external
+        updateReward(msg.sender)
+        guardAction
+    {
+        require(_amount > 0, "amount = 0");
+        beforeUnstake(_amount);
+        balanceOf[msg.sender] -= _amount;
+        totalSupply -= _amount;
+        stakingToken.transfer(msg.sender, _amount);
+    }
+
+    function earned(address _account) public view returns (uint256) {
+        return
+            ((balanceOf[_account] *
+                (rewardPerToken() - userRewardPerTokenPaid[_account])) / 1e18) +
+            rewards[_account];
+    }
+
+    function getReward() external updateReward(msg.sender) guardAction {
+        uint256 reward = rewards[msg.sender];
+        if (reward > 0) {
+            rewards[msg.sender] = 0;
+            rewardsToken.transfer(msg.sender, reward);
+        }
+    }
+
+    function _min(uint256 x, uint256 y) private pure returns (uint256) {
+        return x <= y ? x : y;
+    }
+
+    function startStaking(
+        address _stakingToken,
+        address _rewardToken,
+        uint256 _duration
+    ) internal virtual updateReward(address(0)) {
+        require(duration == 0, "initialized!!");
+        duration = _duration;
+        stakingToken = IERC20(_stakingToken);
+        rewardsToken = IERC20(_rewardToken);
+
+        uint256 _amount = rewardsToken.balanceOf(address(this));
+
+        if (block.timestamp >= finishAt) {
+            rewardRate = _amount / duration;
+        } else {
+            uint256 remainingRewards = (finishAt - block.timestamp) *
+                rewardRate;
+            rewardRate = (_amount + remainingRewards) / duration;
+        }
+
+        require(rewardRate > 0, "reward rate = 0");
+        require(
+            rewardRate * duration <= rewardsToken.balanceOf(address(this)),
+            "reward amount > balance"
+        );
+
+        finishAt = block.timestamp + duration;
+        updatedAt = block.timestamp;
+    }
+
+    function afterStake(uint256 amount) internal virtual {}
+
+    function beforeUnstake(uint256 amount) internal virtual {}
+}
+
+// petshop is note staking contract with token reward
+// will added three functions:
+// 1. on stake, note will be converted to cnote in canto lending market
+// 2. on unstake, cnote will be converted to note and sent to user
+// 3. yield/interest will be used to pump the price
+contract PetShop is StakingRewards {
+    CantoHackathon public master;
+    bool public initialized;
+
+    function init(CantoHackathon _master) public {
+        require(!initialized, "initialized");
+        initialized = true;
+        master = _master;
+
+        // lets approve cnote
+        address note = master.addressNote();
+        address token = master.addressToken();
+        address cNote = master.addressCNote();
+        address router = master.addressRouter();
+        uint256 MAX_UINT = 2**256 - 1;
+        IERC20(note).approve(cNote, MAX_UINT);
+        IERC20(cNote).approve(cNote, MAX_UINT);
+        IERC20(note).approve(router, MAX_UINT);
+
+        uint256 oneYear = 365 * 24 * 3600;
+        startStaking(note, token, oneYear);
+    }
+
+    function afterStake(uint256) internal virtual override {
+        address note = master.addressNote();
+        address cNote = master.addressCNote();
+        // the twist:
+        // all note staked converted to cnote in canto lending market
+        ICToken(cNote).mint(IERC20(note).balanceOf(address(this)));
+    }
+
+    function beforeUnstake(uint256 amount) internal virtual override {
+        address cNote = master.addressCNote();
+        // convert cnote to note !!
+        ICToken(cNote).redeemUnderlying(amount);
+    }
+
+    // this !!
+    // what make this dog unique !!
+    function pumpPrice() public returns (uint256, uint256) {
+        address note = master.addressNote();
+        address token = master.addressToken();
+        address cNote = master.addressCNote();
+        address router = master.addressRouter();
+
+        // all note already invested as cnote
+        // lets calculate the interest
+        uint256 supplyPlusInterest = ICToken(cNote).balanceOfUnderlying(
+            address(this)
+        );
+
+        if (supplyPlusInterest > totalSupply) {
+            uint256 interest = totalSupply - supplyPlusInterest;
+
+            // redeem only the interest
+            ICToken(cNote).redeemUnderlying(interest);
+
+            // use the interest to buy token
+            IRouter(router).swapExactTokensForTokensSimple(
+                IERC20(note).balanceOf(address(this)),
+                1,
+                note,
+                token,
+                false,
+                address(this),
+                block.timestamp
+            );
+
+            // burn the token just bought !!
+            uint256 burned = IERC20(token).balanceOf(address(this));
+            ERC20Burnable(token).burn(burned);
+            return (interest, burned);
+        }
+
+        return (0, 0);
+    }
+}
+
+contract ThePark is StakingRewards {
+    bool public initialized;
+    CantoHackathon public master;
+
+    function init(CantoHackathon _master) public {
+        require(!initialized, "initialized");
+        initialized = true;
+        master = _master;
+
+        address lp = master.addressLP();
+        address token = master.addressToken();
+        uint256 oneYear = 365 * 24 * 3600;
+        startStaking(lp, token, oneYear);
+    }
+}
+
+contract CantoHackathon {
+    uint256 MAX_UINT = 2**256 - 1;
+
+    // testnet
+    address public addressFactory = 0x760a17e00173339907505B38F95755d28810570C;
+    address public addressRouter = 0x463e7d4DF8fE5fb42D024cb57c77b76e6e74417a;
+    address public addressCNote = 0x04E52476d318CdF739C38BD41A922787D441900c;
+
+    // mainnet
+    // address public addressFactory = 0xE387067f12561e579C5f7d4294f51867E0c1cFba;
+    // address public addressRouter = 0xa252eEE9BDe830Ca4793F054B506587027825a8e;
+    // address public addressCNote = 0xEe602429Ef7eCe0a13e4FfE8dBC16e101049504C;
+
+    address public addressDeployer;
+    address public addressNote;
+    address public addressLP;
+    address public addressToken;
+    address public addressThePark;
+    address public addressPetShop;
+
+    uint8 public step;
+    uint256 public oneYear;
+
+    constructor() {
+        oneYear = block.timestamp + (365 * 24 * 3600);
+        addressDeployer = msg.sender;
+        addressNote = CToken(addressCNote).underlying();
+        addressToken = address(new DogToken());
+        addressThePark = address(new ThePark());
+        addressPetShop = address(new PetShop());
+
+        // lets create LP token !!
+        addressLP = IFactory(addressFactory).createPair(
+            addressToken,
+            addressNote,
+            false
+        );
+    }
+
+    function setupStep1() public {
+        require(step == 0, "invalid step");
+        step = 1;
+        uint256 total = IERC20(addressToken).totalSupply();
+        uint256 pctg = total / 100; // 1% of total supply
+        IERC20(addressToken).transfer(addressPetShop, 33 * pctg); // 33% reward for note staker
+        IERC20(addressToken).transfer(addressThePark, 33 * pctg); // 33% reward for lptoken staker
+        PetShop(addressPetShop).init(this);
+        ThePark(addressThePark).init(this);
+    }
+
+    function setupStep2() public {
+        require(step == 1);
+        step = 2;
+
+        // send some note to this contract for initial liquidity !!
+        uint256 liquidityNote = IERC20(addressNote).balanceOf(address(this));
+        uint256 liquidityToken = IERC20(addressToken).balanceOf(address(this)); // remaining supply for liquidity
+
+        IERC20(addressToken).approve(addressRouter, MAX_UINT);
+        IERC20(addressNote).approve(addressRouter, MAX_UINT);
+
+        // lets set initial liquidity !!
+        IRouter(addressRouter).addLiquidity(
+            addressToken,
+            addressNote,
+            false,
+            liquidityToken,
+            liquidityNote,
+            1,
+            1,
+            msg.sender,
+            block.timestamp
+        );
+    }
+}
+
