@@ -5,7 +5,8 @@ import App from './App';
 // 1. Get projectId
 const projectId = 'de1337b51d9e5820befc1a6f6c282cdf';
 
-const c1 = Config.getByChainId('7701');
+const c1 = Config.getByChainId('7700');
+// const c2 = Config.getByChainId('7701');
 const cs = [c1];
 const chains = [];
 for (let i = 0; i < cs.length; i++) {
@@ -56,6 +57,7 @@ createWeb3Modal({
     'c57ca95b47569778a828d19178114f4db188b89b763c899ba0be274e97267d96'
   ],
   chainImages: {
+    7700: 'https://assets.coingecko.com/coins/images/26959/standard/canto-network.png',
     7701: 'https://assets.coingecko.com/coins/images/26959/standard/canto-network.png'
   }
 })

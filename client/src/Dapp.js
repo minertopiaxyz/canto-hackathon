@@ -46,6 +46,7 @@ module.exports = class Dapp {
     const addressThePark = await this.ch.addressThePark();
     this.thePark = new ethers.Contract(addressThePark, THEPARK_ABI, signer);
     console.log('initContracts done..');
+    console.log({ addressToken, addressPetShop, addressThePark, addressLP });
   }
 
   async loadSigner(signer) {
@@ -140,21 +141,27 @@ module.exports = class Dapp {
       let burned2 = 0;
 
       try {
+        console.log('simulate petshop pumpprice..');
         const res = await this.petShop.callStatic.pumpPrice();
         if (res[0].gt('0')) {
           interest = Number(wei2eth(res[0]));
           burned2 = Number(wei2eth(res[1]));
         }
+        console.log(res);
       } catch (err) {
+        console.error('err!!');
       }
 
       try {
+        console.log('simulate dogtoken pumpprice..');
         const res = await this.token.callStatic.pumpPrice();
         if (res[0].gt('0')) {
           csrRevenue = Number(wei2eth(res[0]));
           burned1 = Number(wei2eth(res[1]));
         }
+        console.log(res);
       } catch (err) {
+        console.error('err!!');
       }
       // interest
       // apr1
