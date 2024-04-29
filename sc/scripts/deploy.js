@@ -82,12 +82,34 @@ main().catch((error) => {
 // npx hardhat compile
 // npx hardhat run --network testnet scripts/deploy.js
 // npx hardhat run --network fork scripts/deploy.js
+// npx hardhat run --network canto scripts/deploy.js
 
 // npx hardhat verify --network testnet [sc address]
 
 // cantohackathon: 0xc87F388e0edcc27Fd240f71E094C44CE72EE8a46 testnet
 
+// canto:
+// deploy DogToken
+// dogtoken deployed! 0x3ba72F90e56e5f02C0D00663D286f65a626d01B1
+// deploy PetShop
+// petshop deployed! 0x04Eae49AbE82e9b2012575067646fc1A6B8840Db
+// deploy ThePark
+// thepark deployed! 0x51BE38d8e2B98a0B7338FF647e833A154B5b02a8
+// deploy CantoHackathon
+// cantohackathon address: 0x44B020D79494dd3984eef098e53eC00c521282bE
+// 0x2e67f9edc2dd13470a7a63ffedbf8b252cb231434dac1446e8918694435403c5
+// done!
+// 0xc2a942e4d08984cfee7d3efe6f44667412827679f4d5e0b1c717ab4d9651ffbe
+// done!
+// 0x7d4f645517b4e0d7e1e66ee2095d5c42a51a06458109ac8dbcfe864d411d7eb7
+// done!
+// 0xd3e2dbcfdc8fae6a0547968764568fe36a0a8fcefd88399ee72d02080c9c699a
+// done!
 
+// npx hardhat verify --network canto 0x3ba72F90e56e5f02C0D00663D286f65a626d01B1
+// npx hardhat verify --network canto 0x51BE38d8e2B98a0B7338FF647e833A154B5b02a8
+// npx hardhat verify --network canto 0x04Eae49AbE82e9b2012575067646fc1A6B8840Db
+// npx hardhat verify --network canto 0x44B020D79494dd3984eef098e53eC00c521282bE "0x3ba72F90e56e5f02C0D00663D286f65a626d01B1" "0x04Eae49AbE82e9b2012575067646fc1A6B8840Db" "0x51BE38d8e2B98a0B7338FF647e833A154B5b02a8"
 
 
 

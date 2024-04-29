@@ -36,7 +36,25 @@ module.exports = {
       url: "http://localhost:8545",
       chainId: 7700,
       accounts: [PRIVATEKEY_DEV]
+    },
+    canto: {
+      url: "https://canto.slingshot.finance",
+      chainId: 7700,
+      accounts: [PRIVATEKEY_DEV]
     }
+  },
+  etherscan: {
+    apiKey: process.env.OKLINK_APIKEY,
+    customChains: [
+      {
+        network: "canto",
+        chainId: 7700,
+        urls: {
+          apiURL: "https://www.oklink.com/api/v5/explorer/contract/verify-source-code-plugin/canto",
+          browserURL: "https://www.oklink.com",
+        }
+      }
+    ]
   },
   sourcify: {
     enabled: true,
