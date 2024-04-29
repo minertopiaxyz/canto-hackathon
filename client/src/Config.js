@@ -12,14 +12,17 @@ const config = {
     REWARD_TOKEN2: 'DOGF',
     TOKEN_ADDRESS: '0x3ba72F90e56e5f02C0D00663D286f65a626d01B1',
     MASTER: '0x44B020D79494dd3984eef098e53eC00c521282bE',
-    RPC: 'http://localhost:8545', // https://canto.slingshot.finance/
+    RPC: 'https://canto.slingshot.finance',
     CHAIN_ID: '7700',
-    EXPLORER_URL: 'https://oklink.com/canto',
+    EXPLORER_URL: 'https://www.oklink.com/canto',
     GITHUB_URL: 'https://github.com/minertopiaxyz/canto-hackathon',
-    CONTRACT_URL: 'https://oklink.com/canto/address/CH_ADDRESS/contracts#address-tabs',
-    LP_URL: 'https://pools.canto.io/pools?pair=LP_ADDRESS',
-    NOTE_URL: 'https://app.slingshot.finance/swap/Canto/0x4e71A2E537B7f9D9413D3991D37958c0b5e1e503',
-    TOKEN_URL: 'https://app.slingshot.finance/swap/Canto/TOKEN_ADDRESS'
+    CH_URL: 'https://www.oklink.com/canto/address/0x44b020d79494dd3984eef098e53ec00c521282be/contract',
+    DT_URL: 'https://www.oklink.com/canto/address/0x3ba72f90e56e5f02c0d00663d286f65a626d01b1/contract',
+    PS_URL: 'https://www.oklink.com/canto/address/0x04eae49abe82e9b2012575067646fc1a6b8840db/contract',
+    TP_URL: 'https://www.oklink.com/canto/address/0x51be38d8e2b98a0b7338ff647e833a154b5b02a8/contract',
+    LP_URL: 'https://pools.canto.io/pools?pair=0x1FB95A880dB82f2FcF4a4a01FA4ebbb280D4C6e4',
+    NOTE_URL: 'https://app.slingshot.finance/swap/Canto/NOTE',
+    TOKEN_URL: 'https://dexscreener.com/canto/0x1fb95a880db82f2fcf4a4a01fa4ebbb280d4c6e4'
   },
   '7701': {
     GAS: 'CANTO',

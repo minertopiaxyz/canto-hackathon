@@ -13,6 +13,10 @@ export const DappContext = createContext();
 const LOGO = 'https://res.cloudinary.com/dmyum8dv5/image/upload/f_auto,q_auto/pcsga6bvppeqqyviks4d';
 const LIST_CHAIN_ID = Config.LIST_CHAIN_ID;
 
+function Loading() {
+  return <span className="loading loading-spinner loading-xs text-warning"></span>;
+}
+
 function Staking({
   stakeTokenSymbol, rewardTokenSymbol, apr, ownedStakeToken, stakedToken, unclaimedRewardToken,
   stakeNeedApprove,
@@ -22,6 +26,11 @@ function Staking({
   const [stakeAmount, setStakeAmount] = useState('');
   const [unstakeAmount, setUnstakeAmount] = useState('');
 
+  if (!apr) apr = <Loading />;
+  if (!ownedStakeToken) ownedStakeToken = <Loading />;
+  if (!stakedToken) stakedToken = <Loading />;
+  if (!unclaimedRewardToken) unclaimedRewardToken = <Loading />;
+
   const enableStake = !stakeNeedApprove && Number(stakeAmount) > 0 && Number(stakeAmount) <= Number(ownedStakeToken);
   const enableUnstake = Number(unstakeAmount) > 0 && Number(unstakeAmount) <= Number(stakedToken);
   return (
@@ -29,7 +38,7 @@ function Staking({
       <div className="grid grid-cols-1 gap-1">
         <div>
           Stake {stakeTokenSymbol} to earn {rewardTokenSymbol}<br />
-          <span className="font-bold text-xl">APR {apr}%</span><br />
+          <span className="font-bold text-xl">APR {apr} %</span><br />
           Owned: {ownedStakeToken} {stakeTokenSymbol}<br />
           Staked: {stakedToken} {stakeTokenSymbol}<br />
           Reward: {unclaimedRewardToken} {rewardTokenSymbol}<br />
@@ -102,6 +111,7 @@ function Staking({
 const pumpMsg1 = 'DOGF got hustle! Registered with CSR (Contract Secured Revenue) and holding its own Turnstile NFT, it taps into the shared transaction fee stream. DOGF then uses that sweet cash to buy itself back on Canto DEX, burn it, permanently yanking the tokens out of circulation. Deflationary drip, anyone?';
 const pumpMsg2 = 'Stake NOTE to earn sweet DOGF rewards. Unstake anytime for maximum flexibility. Here`s the twist: Staked NOTE goes on a double duty mission. It generates interest in the Canto Lending Market, and gets used to buy back and incinerate DOGF from the Canto DEX. Talk about burning bright!';
 const description = 'DOGF ain`t your average meme coin. It uses cool features from Canto Network: CSR, NOTE, Canto Dex, and Canto Lending Market to "hack" itself to the moon!';
+
 function TheApp() {
   const { chainId, isConnected } = useWeb3ModalAccount();
   const { walletProvider } = useWeb3ModalProvider();
@@ -109,8 +119,8 @@ function TheApp() {
 
   const [config, setConfig] = useState(Config.NOT_SET);
   const { GAS, TOKEN_ADDRESS, TOKEN_SYMBOL, STAKE_TOKEN, REWARD_TOKEN,
-    STAKE_TOKEN2, REWARD_TOKEN2, EXPLORER_URL, GITHUB_URL, CONTRACT_URL,
-    LP_URL, NOTE_URL, TOKEN_URL
+    STAKE_TOKEN2, REWARD_TOKEN2, EXPLORER_URL, GITHUB_URL, TOKEN_URL,
+    LP_URL, NOTE_URL, CH_URL, DT_URL, TP_URL, PS_URL
   } = config;
 
   // console.log(config);
@@ -336,8 +346,8 @@ function TheApp() {
     Lib.openUrl(GITHUB_URL, true);
   }
 
-  const onClickContractCode = () => {
-    Lib.openUrl(CONTRACT_URL, true);
+  const onClickContractCode = (url) => {
+    Lib.openUrl(url, true);
   }
 
   let PanelConnected = null;
@@ -381,14 +391,25 @@ function TheApp() {
           <p className="max-w-[80vw] truncate">{TOKEN_ADDRESS}</p>
         </span>
       </div>
-      <div className="text-center">
-        Source Code:<br />
-        <span className="btn btn-xs" onClick={onClickGithub}>
-          <p className="max-w-[80vw] truncate">Github</p>
-        </span>
-        <span className="ml-2 btn btn-xs" onClick={onClickContractCode}>
-          <p className="max-w-[80vw] truncate">Contracts Code</p>
-        </span>
+      <div className="flex flex-col items-center">
+        Contracts Source Code:<br />
+        <div className="max-w-[80vw] text-center">
+          <span className="btn btn-xs m-1" onClick={onClickGithub}>
+            Github
+          </span>
+          <span className="btn btn-xs m-1" onClick={() => onClickContractCode(CH_URL)}>
+            CantoHackathon
+          </span>
+          <span className="btn btn-xs m-1" onClick={() => onClickContractCode(DT_URL)}>
+            DogToken
+          </span>
+          <span className="btn btn-xs m-1" onClick={() => onClickContractCode(PS_URL)}>
+            PetShop
+          </span>
+          <span className="btn btn-xs m-1" onClick={() => onClickContractCode(TP_URL)}>
+            ThePark
+          </span>
+        </div>
       </div>
     </div>
   );
@@ -396,8 +417,8 @@ function TheApp() {
   PanelPump1 = (
     <div className="w-full grid grid-cols-1 gap-2">
       <div>
-        CSR Revenue: {csrRevenue} {GAS}<br />
-        Est. bought & burned: {burned1} {TOKEN_SYMBOL}
+        CSR Revenue: {csrRevenue ? csrRevenue : <Loading />} {GAS}<br />
+        Est. bought & burned: {burned1 ? burned1 : <Loading />} {TOKEN_SYMBOL}
       </div>
       <div>
         <button className="btn btn-neutral btn-outline w-full" disabled={!pumpPriceEnable1} onClick={onPumpPrice1}>Buy & Burn</button>
@@ -408,8 +429,8 @@ function TheApp() {
   PanelPump2 = (
     <div className="w-full grid grid-cols-1 gap-2">
       <div>
-        NOTE Interest: {interest}$<br />
-        Est. bought & burned: {burned2} {TOKEN_SYMBOL}
+        NOTE Interest: {interest ? interest : <Loading />} $<br />
+        Est. bought & burned: {burned2 ? burned2 : <Loading />} {TOKEN_SYMBOL}
       </div>
       <div>
         <button className="btn btn-neutral btn-outline w-full" disabled={!pumpPriceEnable2} onClick={onPumpPrice2}>Buy & Burn</button>
@@ -482,7 +503,7 @@ function TheApp() {
               <p>{description}</p>
               <div className="mt-4">
                 <button className="btn btn-neutral btn-outline" onClick={onTrade}>
-                  Buy/Sell {TOKEN_SYMBOL} On Canto Dex
+                  {TOKEN_SYMBOL} Price Chart
                 </button>
               </div>
             </div>
