@@ -4,8 +4,10 @@
 ![enter image description here](https://raw.githubusercontent.com/minertopiaxyz/canto-hackathon/main/public/DOGF_DAPP.png)
 
 The project now live on [CANTO](https://canto.io/) !!
-Check the dapp here: dogf.raijin.tech or [canto-hackathon.vercel.app](https://canto-hackathon.vercel.app/)
-Check the video walkthrough here: 
+
+Check the dapp here: [dogf.raijin.tech](https://dogf.raijin.tech) or [canto-hackathon.vercel.app](https://canto-hackathon.vercel.app/)
+
+Check the video walkthrough here: [loom video link](https://www.loom.com/share/f6c47018688f444388ec55d1a9664dbb?sid=b2674a96-020f-4556-baa1-0d2bcd0b20d6)
 
 ## Problem Statement
 
